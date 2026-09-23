@@ -37,11 +37,14 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # gradlew 등의 불필요한 시스템 파일 변경사항은 초기화(discard)합니다.
+        # gradlew 등의 불필요한 시스템 파일 변경사항은 초기화
         git checkout gradlew
         
-        # posts 폴더 내의 변경된 마크다운 파일만 스테이징
+        # 원격 저장소의 최신 변경사항을 먼저 동기화 (충돌 방지)
+        git pull origin main --rebase
+        
+        # posts 폴더 내의 마크다운 파일 스테이징
         git add posts/
         
         # 변경사항이 있을 경우에만 커밋 및 푸시 진행
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-generate curation post" && git push)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-generate curation post" && git push origin main)
