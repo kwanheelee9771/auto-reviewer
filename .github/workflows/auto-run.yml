@@ -40,11 +40,20 @@ jobs:
         # gradlew 등의 불필요한 시스템 파일 변경사항은 초기화
         git checkout gradlew
         
-        # 원격 저장소의 최신 변경사항을 먼저 동기화 (충돌 방지)
-        git pull origin main --rebase
-        
-        # posts 폴더 내의 마크다운 파일 스테이징
+        # 1. 새로 생성된 마크다운 파일을 먼저 임시로 스테이징합니다.
         git add posts/
         
-        # 변경사항이 있을 경우에만 커밋 및 푸시 진행
+        # 2. 작업 내용을 임시 저장(stash)하여 작업 디렉토리를 깨끗하게 만듭니다.
+        git stash
+        
+        # 3. 원격 저장소의 최신 변경사항을 안전하게 동기화합니다.
+        git pull origin main --rebase
+        
+        # 4. 아까 숨겨둔(stash) 변경사항을 다시 불러옵니다.
+        git stash pop || true
+        
+        # 5. 다시 한 번 확실하게 스테이징
+        git add posts/
+        
+        # 6. 변경사항이 있을 경우에만 커밋 및 푸시 진행
         git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-generate curation post" && git push origin main)
