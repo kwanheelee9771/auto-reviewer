@@ -129,7 +129,7 @@ public class UniversalCurationPublisher {
                 params.put("keywords", keyword);
                 params.put("target_language", "KR");
                 params.put("target_currency", "KRW");
-                params.put("min_sale_price", "30000");
+                params.put("min_sale_price", "100000");
                 params.put("category_ids", "6");
                 params.put("tracking_id", ALI_TRACKING_ID);
                 params.put("page_size", "40"); // 알리 최대 허용치 고정
@@ -193,6 +193,7 @@ public class UniversalCurationPublisher {
                                         titleLower.contains("sweep") || titleLower.contains("cooler") ||
                                         titleLower.contains("cooling") || titleLower.contains("heater") ||
                                         titleLower.contains("refrigerator") || titleLower.contains("module") ||
+                                        titleLower.contains("frame") || titleLower.contains("adapter") ||
                                         titleLower.contains("conditioner")) {
                                     continue;
                                 }
