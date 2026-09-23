@@ -310,6 +310,14 @@ public class UniversalCurationPublisher {
                 curatedProducts.addAll(provider.searchProducts(aliSearchKeyword, 5));
             }
 
+            System.out.println("📦 수집된 유효 상품 수: " + curatedProducts.size() + "개");
+
+            // 🛑 [추가] 수집된 상품이 0개이면 OpenAI를 호출하지 않고 즉시 중단
+            if (curatedProducts.isEmpty()) {
+                System.err.println("❌ 수집된 상품이 없어 AI 리뷰 생성을 중단합니다. (알리 API 응답 확인 필요)");
+                System.exit(1); // 빌드 실패 처리 또는 강제 종료
+            }
+
             // 2. AI 글 작성 (임시 더미 텍스트)
             //System.out.println("AI 비교 리뷰 생성 중...");
             //String aiReview = "이 포스팅은 AI가 분석한 원룸 소형 공기청정기 장단점 비교글입니다.\n\n각 제품의 스펙과 가성비를 중점적으로 비교했습니다.";
