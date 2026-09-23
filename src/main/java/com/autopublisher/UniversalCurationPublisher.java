@@ -116,7 +116,9 @@ public class UniversalCurationPublisher {
 
             // 5개가 다 채워지거나, 최대 페이지에 도달할 때까지 반복
             while (list.size() < limit && pageNo <= maxPages) {
-                String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date());
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT+8")); // 알리 싱가포르 게이트웨이 기준 시간대 설정
+                String timestamp = sdf.format(new java.util.Date());
 
                 // 1. 파라미터 구성
                 java.util.Map<String, String> params = new java.util.TreeMap<>();
