@@ -120,6 +120,8 @@ public class UniversalCurationPublisher {
                 sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT+8")); // 알리 싱가포르 게이트웨이 기준 시간대 설정
                 String timestamp = sdf.format(new java.util.Date());
 
+                System.out.println("🔍 [DEBUG] 생성된 타임스탬프: " + timestamp);
+
                 // 1. 파라미터 구성
                 java.util.Map<String, String> params = new java.util.TreeMap<>();
                 params.put("method", "aliexpress.affiliate.product.query");
@@ -139,6 +141,9 @@ public class UniversalCurationPublisher {
 
                 // 2. MD5 암호화 서명 생성 (페이지 번호가 바뀌므로 매 루프마다 새로 생성해야 함)
                 StringBuilder signStr = new StringBuilder(ALI_APP_SECRET);
+
+                System.out.println("🔍 [DEBUG] 서명 생성 원본 문자열: " + signStr.toString());
+
                 for (java.util.Map.Entry<String, String> entry : params.entrySet()) {
                     signStr.append(entry.getKey()).append(entry.getValue());
                 }
