@@ -37,7 +37,10 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        # posts 폴더 내의 변경된 마크다운 파일을 스테이징
+        # gradlew 등의 불필요한 시스템 파일 변경사항은 초기화(discard)합니다.
+        git checkout gradlew
+        
+        # posts 폴더 내의 변경된 마크다운 파일만 스테이징
         git add posts/
         
         # 변경사항이 있을 경우에만 커밋 및 푸시 진행
