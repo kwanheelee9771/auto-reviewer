@@ -164,6 +164,14 @@ public class UniversalCurationPublisher {
                     String responseBody = response.body().string();
                     JsonObject res = JsonParser.parseString(responseBody).getAsJsonObject();
 
+                    System.out.println("🔍 [디버그] 알리 API 응답 코드: " + response.code());
+                    System.out.println("🔍 [디버그] 알리 API 응답 원문: " + responseBody);
+
+                    if (!response.isSuccessful()) {
+                        System.out.println("❌ 응답 실패로 인한 탈출");
+                        break;
+                    }
+
                     if (res.has("aliexpress_affiliate_product_query_response")) {
                         JsonObject queryRes = res.getAsJsonObject("aliexpress_affiliate_product_query_response");
                         if (queryRes.getAsJsonObject("resp_result").get("resp_code").getAsInt() == 200) {
