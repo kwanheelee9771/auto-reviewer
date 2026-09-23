@@ -37,6 +37,8 @@ public class UniversalCurationPublisher {
 
     private static final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)    // AI 응답 대기 시간 60초로 연장
+            .writeTimeout(60, TimeUnit.SECONDS)   // 전송 대기 시간 60초로 연장
             .build();
 
     static class Product {
