@@ -1,5 +1,10 @@
 plugins {
     id 'java'
+    id 'application' // 추가
+}
+
+application {
+    mainClass = 'com.autopublisher.UniversalCurationPublisher' // 대표님의 실제 메인 클래스 경로로 수정
 }
 
 group = 'com.autopublisher'
