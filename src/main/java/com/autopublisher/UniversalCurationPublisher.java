@@ -29,9 +29,10 @@ public class UniversalCurationPublisher {
     private static final String CP_SECRET_KEY = "쿠팡_시크릿키";
 
     // [수정된 부분] 알리익스프레스 App Secret 변수 추가
-    private static final String ALI_APP_KEY = System.getenv("ALI_APP_KEY");
-    private static final String ALI_APP_SECRET = System.getenv("ALI_APP_SECRET");
-    private static final String ALI_TRACKING_ID = System.getenv("ALI_TRACKING_ID");
+    private static final String ALI_APP_KEY = System.getenv("ALI_APP_KEY") != null ? System.getenv("ALI_APP_KEY").trim() : "";
+    private static final String ALI_APP_SECRET = System.getenv("ALI_APP_SECRET") != null ? System.getenv("ALI_APP_SECRET").trim() : "";
+    private static final String ALI_TRACKING_ID = System.getenv("ALI_TRACKING_ID") != null ? System.getenv("ALI_TRACKING_ID").trim() : "";
+
     // =========================================================
 
     private static final OkHttpClient client = new OkHttpClient.Builder()
