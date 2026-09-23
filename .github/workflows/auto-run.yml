@@ -30,6 +30,14 @@ jobs:
           chmod +x gradlew
           ./gradlew run
 
+      # -----------------------------------------------------------
+      # [추가된 부분] 자바 봇이 만든 posts 폴더를 Hugo 구조에 맞게 이동
+      # -----------------------------------------------------------
+      - name: Hugo 구조에 맞게 폴더 이동
+        run: |
+          mkdir -p content
+          mv posts content/
+
       - name: Hugo 설치
         uses: peaceiris/actions-hugo@v3
         with:
@@ -46,23 +54,16 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # gradlew 등의 불필요한 시스템 파일 변경사항은 초기화
           git checkout gradlew || true
           
-          # 1. 새로 생성된 마크다운 파일(posts/)과 Hugo 빌드 결과물(public/)을 스테이징합니다.
-          git add posts/ public/
+          # [수정된 부분] 기존 posts/ 삭제 반영 및 새 위치 content/ 와 public/ 을 스테이징
+          git add --all posts/ content/ public/
           
-          # 2. 작업 내용을 임시 저장(stash)하여 작업 디렉토리를 깨끗하게 만듭니다.
           git stash
-          
-          # 3. 원격 저장소의 최신 변경사항을 안전하게 동기화합니다.
           git pull origin main --rebase
-          
-          # 4. 아까 숨겨둔(stash) 변경사항을 다시 불러옵니다.
           git stash pop || true
           
-          # 5. 다시 한 번 확실하게 스테이징
-          git add posts/ public/
+          # [수정된 부분] 다시 한 번 확실하게 스테이징
+          git add --all posts/ content/ public/
           
-          # 6. 변경사항이 있을 경우에만 커밋 및 푸시 진행
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-generate curation post and build site" && git push origin main)
