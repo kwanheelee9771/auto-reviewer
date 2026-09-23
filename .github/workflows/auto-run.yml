@@ -35,8 +35,11 @@ jobs:
       # -----------------------------------------------------------
       - name: Hugo 구조에 맞게 폴더 이동
         run: |
-          mkdir -p content
-          mv posts content/
+          mkdir -p content/posts
+          # posts 폴더 안의 내용물(*)만 content/posts 안으로 쏙 이동
+          mv posts/* content/posts/
+          # 껍데기만 남은 빈 posts 폴더는 삭제
+          rm -rf posts
 
       - name: Hugo 설치
         uses: peaceiris/actions-hugo@v3
@@ -56,14 +59,14 @@ jobs:
           
           git checkout gradlew || true
           
-          # [수정된 부분] 기존 posts/ 삭제 반영 및 새 위치 content/ 와 public/ 을 스테이징
-          git add --all posts/ content/ public/
+          # [여기 수정] posts/ 제외
+          git add --all content/ public/
           
           git stash
           git pull origin main --rebase
           git stash pop || true
           
-          # [수정된 부분] 다시 한 번 확실하게 스테이징
-          git add --all posts/ content/ public/
+          # [여기 수정] posts/ 제외
+          git add --all content/ public/
           
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-generate curation post and build site" && git push origin main)
