@@ -1,6 +1,7 @@
 baseURL = 'https://auto-reviewer.pages.dev/'
 languageCode = 'ko-kr'
 title = '가성비 큐레이션 Lab'
+theme = 'papermod' # 이 줄을 추가
 
 [params]
 description = "알리익스프레스 및 실시간 데이터 기반 스마트 가전 및 제품 큐레이션"
