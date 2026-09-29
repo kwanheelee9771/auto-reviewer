@@ -5,3 +5,22 @@ theme = 'papermod' # 이 줄을 추가
 
 [params]
 description = "알리익스프레스 및 실시간 데이터 기반 스마트 가전 및 제품 큐레이션"
+
+[menu]
+[[menu.main]]
+identifier = "about"
+name = "About"
+url = "/about/"
+weight = 10
+
+[[menu.main]]
+identifier = "disclaimer"
+name = "Disclaimer"
+url = "/disclaimer/"
+weight = 20
+
+[[menu.main]]
+identifier = "categories"
+name = "Categories"
+url = "/categories/"
+weight = 30

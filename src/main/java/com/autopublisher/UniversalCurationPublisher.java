@@ -59,12 +59,14 @@ public class UniversalCurationPublisher {
         String price;
         String url;
         String source;
+        String imageUrl;
 
-        public Product(String name, String price, String url, String source) {
+        public Product(String name, String price, String url, String source, String imageUrl) {
             this.name = name.replaceAll("<[^>]*>", "");
             this.price = price;
             this.url = url;
             this.source = source;
+            this.imageUrl = imageUrl;
         }
     }
 
@@ -86,7 +88,7 @@ public class UniversalCurationPublisher {
         @Override
         public List<Product> searchProducts(CategoryRule rule, int limit) throws Exception {
             List<Product> list = new ArrayList<>();
-            list.add(new Product("[쿠팡 추천] " + rule.keyword, "45000", "https://coupa.ng/xxxx", "Coupang"));
+            //list.add(new Product("[쿠팡 추천] " + rule.keyword, "45000", "https://coupa.ng/xxxx", "Coupang"));
             return list;
         }
     }
@@ -177,11 +179,17 @@ public class UniversalCurationPublisher {
                                 }
                                 if (isExcluded) continue;
 
+                                String mainImageUrl = "";
+                                if (item.has("product_main_image_url")) {
+                                    mainImageUrl = item.get("product_main_image_url").getAsString();
+                                }
+
                                 list.add(new Product(
                                         title,
                                         item.get("target_sale_price").getAsString(),
                                         item.get("promotion_link").getAsString(),
-                                        "AliExpress"
+                                        "AliExpress",
+                                        mainImageUrl
                                 ));
                             }
                         }
@@ -263,56 +271,87 @@ public class UniversalCurationPublisher {
                 new CategoryRule("Wireless CarPlay Adapter", "30000", "cable", "mount", "case")
         };
 
-        // 날짜 기반으로 순회하며 오늘의 룰 꺼내기
         int dayOfYear = LocalDate.now().getDayOfYear();
-        CategoryRule targetRule = rules[dayOfYear % rules.length];
+        int startIndex = dayOfYear % rules.length;
 
-        System.out.println("🚀 Today's Category: " + targetRule.keyword + " (Min Price: ₩" + targetRule.minPriceKrw + ")");
+        CategoryRule successfulRule = null;
+        List<Product> curatedProducts = new ArrayList<>();
+
+        // [핵심 추가] 상품이 찾아질 때까지 다음 카테고리를 순회하는 로직
+        for (int i = 0; i < rules.length; i++) {
+            int currentIndex = (startIndex + i) % rules.length;
+            CategoryRule targetRule = rules[currentIndex];
+
+            System.out.println("🚀 [" + (i+1) + "차 시도] 카테고리: " + targetRule.keyword + " (최소 ₩" + targetRule.minPriceKrw + ")");
+
+            try {
+                List<AffiliateProvider> providers = new ArrayList<>();
+                // providers.add(new NaverDecoyProvider());
+                // providers.add(new CoupangProvider());
+                providers.add(new AliExpressProvider());
+
+                curatedProducts.clear();
+                for (AffiliateProvider provider : providers) {
+                    curatedProducts.addAll(provider.searchProducts(targetRule, 5));
+                }
+
+                if (!curatedProducts.isEmpty()) {
+                    successfulRule = targetRule;
+                    System.out.println("✅ 상품 찾기 성공! 수집된 상품 수: " + curatedProducts.size());
+                    break; // 성공했으므로 반복문 탈출
+                } else {
+                    System.out.println("⚠️ 해당 카테고리에서 조건에 맞는 상품이 없어 다음 카테고리로 넘어갑니다.");
+                    Thread.sleep(2000); // API 호출 속도 제한 방지용 2초 대기
+                }
+            } catch (Exception e) {
+                System.out.println("⚠️ 시도 중 에러 발생: " + e.getMessage());
+            }
+        }
+
+        if (curatedProducts.isEmpty() || successfulRule == null) {
+            System.err.println("❌ 7개 카테고리 모두 상품 검색 실패 (API 오류 추정). 강제 종료합니다.");
+            System.exit(1);
+        }
 
         try {
-            List<AffiliateProvider> providers = new ArrayList<>();
-            // providers.add(new NaverDecoyProvider());
-            // providers.add(new CoupangProvider());
-            providers.add(new AliExpressProvider());
-
-            List<Product> curatedProducts = new ArrayList<>();
-            for (AffiliateProvider provider : providers) {
-                curatedProducts.addAll(provider.searchProducts(targetRule, 5));
-            }
-
-            System.out.println("📦 Collected Valid Products: " + curatedProducts.size());
-
-            if (curatedProducts.isEmpty()) {
-                System.err.println("❌ No valid products found. (Blocked by price/filters). Aborting.");
-                System.exit(1);
-            }
-
-            System.out.println("Generating English Review via OpenAI...");
-            String aiReview = generateAiReview(targetRule.keyword, curatedProducts);
+            System.out.println("Generating English Review via OpenAI for " + successfulRule.keyword + "...");
+            String aiReview = generateAiReview(successfulRule.keyword, curatedProducts);
 
             Date now = new Date();
             String dateFormatted = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").format(now);
 
             StringBuilder mdContent = new StringBuilder();
             mdContent.append("---\n");
-            mdContent.append("title: \"Top 5 Best ").append(targetRule.keyword).append(" (Highly Recommended)\"\n");
+            mdContent.append("title: \"Top 5 Best ").append(successfulRule.keyword).append(" (Highly Recommended)\"\n");
             mdContent.append("date: ").append(dateFormatted).append("\n");
             mdContent.append("category: \"Tech Gadgets\"\n");
-            mdContent.append("tags: [\"").append(targetRule.keyword).append("\", \"Best Deals\", \"Review\"]\n");
+            mdContent.append("tags: [\"").append(successfulRule.keyword).append("\", \"Best Deals\", \"Review\"]\n");
+
+            if (curatedProducts.get(0).imageUrl != null && !curatedProducts.get(0).imageUrl.isEmpty()) {
+                mdContent.append("cover:\n");
+                mdContent.append("  image: \"").append(curatedProducts.get(0).imageUrl).append("\"\n");
+                mdContent.append("  alt: \"").append(successfulRule.keyword).append("\"\n");
+            }
             mdContent.append("---\n\n");
 
             mdContent.append(aiReview).append("\n\n");
-            mdContent.append("---\n### 🛒 Best Deals\n\n");
 
-            for (Product p : curatedProducts) {
-                // 한화로 수집하더라도 프론트는 달러 기호나 범용 텍스트로 치환하여 글로벌 느낌 유지
-                mdContent.append(String.format("- **[%s]** %s - [Check Current Price Here](%s)\n",
-                        p.source, p.name, p.url));
+            mdContent.append("---\n### 🛒 Best Deals & Latest Prices\n\n");
+
+            for (int i = 0; i < curatedProducts.size(); i++) {
+                Product p = curatedProducts.get(i);
+                mdContent.append("#### ").append(i + 1).append(". ").append(p.name).append("\n\n");
+
+                if (p.imageUrl != null && !p.imageUrl.isEmpty()) {
+                    mdContent.append("<img src=\"").append(p.imageUrl).append("\" alt=\"").append(p.name.replace("\"", "")).append("\" width=\"400\" style=\"border-radius:8px; margin-bottom:10px;\" />\n\n");
+                }
+                mdContent.append("👉 **[Check Current Price on ").append(p.source).append("](").append(p.url).append(")**\n\n");
             }
-            mdContent.append("\n<br><span style='font-size:12px; color:#888;'>*Disclosure: This post contains affiliate links. We may earn a commission at no extra cost to you.</span>\n");
+
+            mdContent.append("---\n<br><span style='font-size:12px; color:#888;'>*Disclosure: This post contains affiliate links. We may earn a commission at no extra cost to you.</span>\n");
 
             String fileDatePrefix = new SimpleDateFormat("yyyy-MM-dd").format(now);
-            String seoFileName = fileDatePrefix + "-" + targetRule.keyword.toLowerCase().replaceAll(" ", "-") + ".md";
+            String seoFileName = fileDatePrefix + "-" + successfulRule.keyword.toLowerCase().replaceAll(" ", "-") + ".md";
 
             File dir = new File("posts");
             if (!dir.exists()) dir.mkdirs();
