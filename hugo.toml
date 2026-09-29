@@ -1,4 +1,4 @@
-baseURL = 'https://auto-reviewer.pages.dev/'
+baseURL = "https://tech-curator.info/"
 languageCode = 'ko-kr'
 title = '가성비 큐레이션 Lab'
 theme = 'papermod' # 이 줄을 추가
