@@ -1,7 +1,7 @@
 ---
 title: "Top 5 Best Air Purifier (Highly Recommended)"
 date: 2026-09-30T01:40:15Z
-category: "Tech Gadgets"
+categories: ["Tech Gadgets"]
 tags: ["Air Purifier", "Best Deals", "Review"]
 cover:
   image: "https://ae-pic-a1.aliexpress-media.com/kf/S530f31e881e242599e37a320b5224b01H.jpg"

@@ -1,7 +1,7 @@
 ---
 title: "Top 5 Best Robot Vacuum Cleaner (Highly Recommended)"
 date: 2026-09-24T00:56:37Z
-category: "Tech Gadgets"
+categories: ["Tech Gadgets"]
 tags: ["Robot Vacuum Cleaner", "Best Deals", "Review"]
 ---
 

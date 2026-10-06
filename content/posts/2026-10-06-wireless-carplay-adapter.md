@@ -1,7 +1,7 @@
 ---
 title: "Top 5 Best Wireless CarPlay Adapter (Highly Recommended)"
 date: 2026-10-06T02:33:45Z
-category: "Tech Gadgets"
+categories: ["Tech Gadgets"]
 tags: ["Wireless CarPlay Adapter", "Best Deals", "Review"]
 cover:
   image: "https://ae-pic-a1.aliexpress-media.com/kf/S9e98f65b297046dbb6ea8b6747f1f357D.jpg"

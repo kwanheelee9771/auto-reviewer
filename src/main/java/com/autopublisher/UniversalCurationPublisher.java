@@ -216,7 +216,8 @@ public class UniversalCurationPublisher {
         // 1. [핵심 수정] 한국어 포스팅 제목에 (광고) 명시
         md.append("title: \"").append(isKorean ? "[광고] 가성비 최고! 추천 " + titleTopic + " Top 5" : "Top 5 Best " + titleTopic + " (Highly Recommended)").append("\"\n");
         md.append("date: ").append(dateFormatted).append("\n");
-        md.append("category: \"").append(isKorean ? "IT/가전" : "Tech Gadgets").append("\"\n");
+        md.append("categories: [\"").append(isKorean ? "IT/가전" : "Tech Gadgets").append("\"]\n");
+        md.append("tags: [\"").append(titleTopic).append(isKorean ? "\", \"추천\", \"리뷰\"]\n" : "\", \"Review\", \"Best Deals\"]\n");
         if (!products.isEmpty() && !products.get(0).imageUrl.isEmpty()) {
             md.append("cover:\n  image: \"").append(products.get(0).imageUrl).append("\"\n");
         }

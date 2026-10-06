@@ -1,7 +1,7 @@
 ---
 title: "Top 5 Best Portable Power Station (Highly Recommended)"
 date: 2026-10-05T01:20:02Z
-category: "Tech Gadgets"
+categories: ["Tech Gadgets"]
 tags: ["Portable Power Station", "Best Deals", "Review"]
 cover:
   image: "https://ae-pic-a1.aliexpress-media.com/kf/S71879991268c4cdc9c7cbe0e7ef6b628Z.jpg"

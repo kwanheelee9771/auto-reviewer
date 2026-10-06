@@ -1,7 +1,7 @@
 ---
 title: "Top 5 Best Ergonomic Mechanical Keyboard (Highly Recommended)"
 date: 2026-10-03T01:30:49Z
-category: "Tech Gadgets"
+categories: ["Tech Gadgets"]
 tags: ["Ergonomic Mechanical Keyboard", "Best Deals", "Review"]
 cover:
   image: "https://ae-pic-a1.aliexpress-media.com/kf/Sfc498e39538740eeac8f1cf788024c91S.jpg"

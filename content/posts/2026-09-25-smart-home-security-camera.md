@@ -1,7 +1,7 @@
 ---
 title: "Top 5 Best Smart Home Security Camera (Highly Recommended)"
 date: 2026-09-25T00:57:07Z
-category: "Tech Gadgets"
+categories: ["Tech Gadgets"]
 tags: ["Smart Home Security Camera", "Best Deals", "Review"]
 ---
 
