@@ -29,7 +29,3 @@ weight = 30
 [markup.goldmark]
 [markup.goldmark.renderer]
 unsafe = true
-
-[taxonomies]
-category = "categories"
-tag = "tags"
