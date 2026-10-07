@@ -33,14 +33,13 @@ jobs:
           ./gradlew run
 
       # -----------------------------------------------------------
-      # [추가된 부분] 자바 봇이 만든 posts 폴더를 Hugo 구조에 맞게 이동
+      # [수정 1] 폴더 이동 에러 해결 (mv 대신 cp -r 사용)
+      # 기존 폴더가 있어도 에러 나지 않고 내용물만 안전하게 병합 복사
       # -----------------------------------------------------------
       - name: Hugo 구조에 맞게 폴더 이동
         run: |
           mkdir -p content/posts
-          # posts 폴더 안의 내용물(*)만 content/posts 안으로 쏙 이동
-          mv posts/* content/posts/
-          # 껍데기만 남은 빈 posts 폴더는 삭제
+          cp -r posts/* content/posts/
           rm -rf posts
 
       - name: Hugo 설치
@@ -52,6 +51,10 @@ jobs:
       - name: Hugo 정적 웹사이트 빌드
         run: hugo --destination public
 
+      # -----------------------------------------------------------
+      # [수정 2] 카테고리 증발 에러 해결 (git add -f 옵션 추가)
+      # 깃허브가 카테고리 폴더를 무시하지 못하도록 강제로 커밋에 포함
+      # -----------------------------------------------------------
       - name: 생성된 마크다운 및 빌드 결과물 깃허브에 푸시
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -61,14 +64,14 @@ jobs:
           
           git checkout gradlew || true
           
-          # [여기 수정] posts/ 제외
-          git add --all content/ public/
+          # 새롭게 생성된 카테고리 데이터 강제 추적
+          git add -f content/ public/
           
           git stash
           git pull origin main --rebase
           git stash pop || true
           
-          # [여기 수정] posts/ 제외
-          git add --all content/ public/
+          # 깃풀(Pull) 이후 다시 한번 꼼꼼하게 강제 추적
+          git add -f content/ public/
           
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-generate curation post and build site" && git push origin main)
