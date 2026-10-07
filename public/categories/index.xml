@@ -6,6 +6,21 @@
     <description>Recent content in Categories on 가성비 큐레이션 Lab</description>
     <generator>Hugo</generator>
     <language>ko-kr</language>
+    <lastBuildDate>Wed, 07 Oct 2026 02:06:18 +0000</lastBuildDate>
     <atom:link href="https://tech-curator.info/categories/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>IT/가전</title>
+      <link>https://tech-curator.info/categories/it/%EA%B0%80%EC%A0%84/</link>
+      <pubDate>Wed, 07 Oct 2026 02:06:18 +0000</pubDate>
+      <guid>https://tech-curator.info/categories/it/%EA%B0%80%EC%A0%84/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Tech Gadgets</title>
+      <link>https://tech-curator.info/categories/tech-gadgets/</link>
+      <pubDate>Wed, 07 Oct 2026 02:06:08 +0000</pubDate>
+      <guid>https://tech-curator.info/categories/tech-gadgets/</guid>
+      <description></description>
+    </item>
   </channel>
 </rss>
