@@ -22,6 +22,7 @@ jobs:
 
       - name: 자바 봇 실행 및 마크다운 생성
         env:
+          GCP_KEY_JSON: ${{ secrets.GCP_KEY_JSON }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ALI_APP_KEY: ${{ secrets.ALI_APP_KEY }}
           ALI_APP_SECRET: ${{ secrets.ALI_APP_SECRET }}
