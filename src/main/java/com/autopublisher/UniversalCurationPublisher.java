@@ -354,7 +354,7 @@ public class UniversalCurationPublisher {
             md.append("### 📌 Related Tech Recommendations\n\n");
             if (exactPostUrl != null) {
                 md.append("> Upgrading your setup? Check out our latest hands-on comparison and verified selections:\n\n")
-                        .append("👉 **[Top 5 Best ").append(baseTheme).append(" (2026 Buyer's Guide)](").append(exactPostUrl).append(")**\n\n");
+                        .append("👉 **[Check Out Related Tech Gear Top 5 Buyer's Guide](").append(exactPostUrl).append(")**\n\n");
             } else {
                 md.append("> Looking for reliable gear? Explore our curated tech reviews and buyer's guides:\n\n")
                         .append("👉 **[Explore Tech Gadgets Buyer's Guides](/categories/tech-gadgets/)**\n\n");
@@ -372,11 +372,10 @@ public class UniversalCurationPublisher {
 
     /**
      * posts 또는 content/posts 디렉터리를 스캔하여
-     * 오늘 테마(theme) 단어가 포함된 실존 큐레이션 글(.md)을 찾고 정확한 URL을 반환.
+     * 테마 관련 글을 매칭. 서치콘솔의 롱테일 키워드 대응.
      */
     private static String findExactCurationPostUrl(String folderName, String theme) {
         try {
-            // [핵심 수정] Hugo 구조(content/posts)와 일반 구조(posts) 모두 탐색
             File dir = new File("content/posts/" + folderName);
             if (!dir.exists() || !dir.isDirectory()) {
                 dir = new File("posts/" + folderName);
@@ -393,7 +392,6 @@ public class UniversalCurationPublisher {
                 return null;
             }
 
-            // 가이드 글(-guide-)이 아닌 순수 큐레이션 마크다운 파일만 추출
             File[] files = dir.listFiles((d, name) ->
                     name.endsWith(".md") && !name.contains("-guide-")
             );
@@ -403,23 +401,33 @@ public class UniversalCurationPublisher {
                 return null;
             }
 
-            // 최신 날짜 순(내림차순) 정렬
             Arrays.sort(files, (f1, f2) -> f2.getName().compareTo(f1.getName()));
 
-            // 오늘 테마 단어 매칭 검사
-            String targetTheme = theme.toLowerCase().replaceAll("[^a-z0-9가-힣]", "");
-
-            for (File file : files) {
-                String cleanName = file.getName().toLowerCase().replaceAll("[^a-z0-9가-힣]", "");
-                if (cleanName.contains(targetTheme)) {
-                    String slug = file.getName().substring(0, file.getName().lastIndexOf(".md"));
-                    String matchedUrl = "/posts/" + folderName + "/" + slug + "/";
-                    System.out.println("🎯 기존 큐레이션 포스트 매칭 성공: " + file.getName());
-                    return matchedUrl;
+            // [핵심 개선] 롱테일 키워드(예: "best healthy keyboard under 1000")를 단어 단위로 쪼갬
+            String[] tokens = theme.toLowerCase().split("[^a-z0-9가-힣]+");
+            List<String> coreWords = new ArrayList<>();
+            for (String t : tokens) {
+                // 불용어 제외 및 유의미한 길이(2글자 이상)의 핵심어만 추출
+                if (t.length() >= 3 && !t.matches("best|top|under|guide|tips|solve|2026|how|the|and|for")) {
+                    coreWords.add(t);
                 }
             }
 
-            System.out.println("ℹ️ 오늘 테마('" + theme + "')와 일치하는 기존 큐레이션 글이 아직 없습니다.");
+            for (File file : files) {
+                String cleanFileName = file.getName().toLowerCase().replaceAll("[^a-z0-9가-힣]", "");
+
+                // 파일명이 추출한 핵심 단어 중 하나라도 포함하고 있는지 검사 (예: "keyboard" 포함 여부)
+                for (String word : coreWords) {
+                    if (cleanFileName.contains(word)) {
+                        String slug = file.getName().substring(0, file.getName().lastIndexOf(".md"));
+                        String matchedUrl = "/posts/" + folderName + "/" + slug + "/";
+                        System.out.println("🎯 매칭 성공 (핵심어 '" + word + "'): " + file.getName());
+                        return matchedUrl;
+                    }
+                }
+            }
+
+            System.out.println("ℹ️ '" + theme + "'에 매칭되는 큐레이션 글이 없어 카테고리로 안내합니다.");
 
         } catch (Exception e) {
             System.out.println("❌ 큐레이션 포스트 탐색 에러: " + e.getMessage());
@@ -502,13 +510,17 @@ public class UniversalCurationPublisher {
                     System.out.println("ℹ️ 서치콘솔 키워드 없음 → 카테고리 기반 팁 작성: " + targetKeyword);
                 }
 
+                // 서치콘솔 키워드면 targetKeyword 자체를, 기본 팁이면 todayRule을 테마로 지정
+                String activeTheme = (!oppKeywords.isEmpty()) ? targetKeyword : todayRule.keywordKr;
+                String activeThemeEng = (!oppKeywords.isEmpty()) ? targetKeyword : todayRule.keyword;
+
                 boolean isKoreanKeyword = targetKeyword.matches(".*[가-힣].*");
                 if (isKoreanKeyword) {
                     String review = generateAiInfoGuide(targetKeyword, true);
-                    saveInfoGuideMarkdown(targetKeyword, review, "korea", true, todayRule.keywordKr);
+                    saveInfoGuideMarkdown(targetKeyword, review, "korea", true, activeTheme);
                 } else {
                     String review = generateAiInfoGuide(targetKeyword, false);
-                    saveInfoGuideMarkdown(targetKeyword, review, "global", false, todayRule.keyword);
+                    saveInfoGuideMarkdown(targetKeyword, review, "global", false, activeThemeEng);
                 }
 
             } else {
