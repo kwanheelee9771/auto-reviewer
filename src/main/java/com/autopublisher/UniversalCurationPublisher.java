@@ -335,17 +335,30 @@ public class UniversalCurationPublisher {
 
         md.append(content).append("\n\n---\n");
 
-        // [핵심] 실제 디렉터리에서 가장 최근에 발행된 해당 테마 큐레이션 글의 정확한 상대 URL 획득
-        String exactPostUrl = findLatestCurationPostUrl(folderName, baseTheme);
+        // [내부 링크 생성]
+        // 오늘 테마와 일치하는 글이 있으면 해당 포스트 URL, 없으면 null
+        String exactPostUrl = findExactCurationPostUrl(folderName, baseTheme);
 
         if (isKorean) {
-            md.append("### 📌 함께 보면 좋은 추천 장비 가이드\n\n")
-                    .append("> " + baseTheme + " 교체나 신규 구매를 고민 중이시라면 실사용 성능과 가성비 검증을 마친 인기 추천 모델을 확인해 보세요.\n\n")
-                    .append("👉 **[2026 가성비 " + baseTheme + " 추천 Top 5 비교 및 실사용 가이드](" + exactPostUrl + ")**\n\n");
+            md.append("### 📌 함께 보면 좋은 추천 장비 가이드\n\n");
+            if (exactPostUrl != null) {
+                // 테마가 정확히 일치하는 기존 추천글이 있을 때
+                md.append("> ").append(baseTheme).append(" 교체나 신규 구매를 고민 중이시라면 가성비와 성능이 검증된 인기 모델을 확인해 보세요.\n\n")
+                        .append("👉 **[2026 가성비 ").append(baseTheme).append(" 추천 Top 5 비교 및 실사용 가이드](").append(exactPostUrl).append(")**\n\n");
+            } else {
+                // 아직 해당 테마 추천글이 없을 때는 카테고리 전체 모음으로 연결 (404 방지)
+                md.append("> 가성비와 실사용 평가를 종합한 최신 IT/가전 기기 비교 정보는 아래 카테고리에서 확인하실 수 있습니다.\n\n")
+                        .append("👉 **[IT/가전 추천 가이드 전체 모음 보러가기](/categories/it-가전/)**\n\n");
+            }
         } else {
-            md.append("### 📌 Related Tech Recommendations\n\n")
-                    .append("> Upgrading your setup? Check out our latest hands-on comparison and curated selections:\n\n")
-                    .append("👉 **[Top 5 Best " + baseTheme + " (2026 Buyer's Guide)](" + exactPostUrl + ")**\n\n");
+            md.append("### 📌 Related Tech Recommendations\n\n");
+            if (exactPostUrl != null) {
+                md.append("> Upgrading your setup? Check out our latest hands-on comparison and verified selections:\n\n")
+                        .append("👉 **[Top 5 Best ").append(baseTheme).append(" (2026 Buyer's Guide)](").append(exactPostUrl).append(")**\n\n");
+            } else {
+                md.append("> Looking for reliable gear? Explore our curated tech reviews and buyer's guides:\n\n")
+                        .append("👉 **[Explore Tech Gadgets Buyer's Guides](/categories/tech-gadgets/)**\n\n");
+            }
         }
 
         File dir = new File("posts/" + folderName);
@@ -355,6 +368,61 @@ public class UniversalCurationPublisher {
         Path filePath = Paths.get("posts/" + folderName, fileDatePrefix + "-guide-" + safeName + ".md");
         Files.write(filePath, md.toString().getBytes(StandardCharsets.UTF_8));
         System.out.println("✅ [정보성 가이드 저장 완료] (" + folderName + "): " + filePath.toAbsolutePath());
+    }
+
+    private static String findExactCurationPostUrl(String folderName, String theme) {
+        try {
+            // 1. 작업 디렉터리 다각도 체크 (로컬 및 GitHub Actions 호환)
+            File dir = new File("posts/" + folderName);
+            if (!dir.exists() || !dir.isDirectory()) {
+                dir = new File(System.getProperty("user.dir"), "posts/" + folderName);
+            }
+            if (!dir.exists() || !dir.isDirectory()) {
+                dir = new File("../posts/" + folderName);
+            }
+
+            if (!dir.exists() || !dir.isDirectory()) {
+                System.out.println("⚠️ posts/" + folderName + " 디렉터리를 찾을 수 없습니다.");
+                return null;
+            }
+
+            // 2. 가이드 글(-guide-)이 아닌 순수 큐레이션 마크다운 파일만 추출
+            File[] files = dir.listFiles((d, name) ->
+                    name.endsWith(".md") && !name.contains("-guide-")
+            );
+
+            if (files == null || files.length == 0) {
+                System.out.println("ℹ️ posts/" + folderName + " 내에 큐레이션 글이 아직 없습니다.");
+                return null;
+            }
+
+            // 3. 최신 날짜 순(내림차순) 정렬
+            Arrays.sort(files, (f1, f2) -> f2.getName().compareTo(f1.getName()));
+
+            // 4. 오늘 테마 단어가 파일명에 포함되어 있는지 검사 (특수문자/공백 제거 후 비교)
+            String targetTheme = theme.toLowerCase().replaceAll("[^a-z0-9가-힣]", "");
+
+            for (File file : files) {
+                String cleanName = file.getName().toLowerCase().replaceAll("[^a-z0-9가-힣]", "");
+                if (cleanName.contains(targetTheme)) {
+                    // .md 확장자 제거하여 실제 슬러그 생성
+                    String slug = file.getName().substring(0, file.getName().lastIndexOf(".md"));
+
+                    // 사이트 공식 퍼머링크 규격: /posts/{folderName}/{slug}/
+                    String matchedUrl = "/posts/" + folderName + "/" + slug + "/";
+                    System.out.println("🎯 오늘 테마와 일치하는 큐레이션 포스트 매칭 성공: " + file.getName());
+                    System.out.println("🔗 연결할 내부 링크 URL: " + matchedUrl);
+                    return matchedUrl;
+                }
+            }
+
+            System.out.println("ℹ️ 오늘 테마('" + theme + "')와 일치하는 기존 큐레이션 글이 아직 없습니다.");
+
+        } catch (Exception e) {
+            System.out.println("❌ 큐레이션 포스트 탐색 에러: " + e.getMessage());
+        }
+
+        return null;
     }
 
     /**

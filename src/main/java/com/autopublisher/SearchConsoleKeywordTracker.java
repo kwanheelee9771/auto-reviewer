@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class SearchConsoleKeywordTracker {
 
     // [필수] 서치콘솔 등록 URL (URL 접두사면 맨 끝 / 포함, 도메인 속성이면 sc-domain:도메인)
-    private static final String SITE_URL = "https://tech-curator.info/";
+    private static final String SITE_URL = "sc-domain:tech-curator.info";
     private static final String GCP_KEY_JSON = System.getenv("GCP_KEY_JSON");
 
     private static final OkHttpClient client = new OkHttpClient.Builder()
