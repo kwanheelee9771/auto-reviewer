@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -474,6 +475,39 @@ public class UniversalCurationPublisher {
         return "/posts/" + folderName + "/";
     }
 
+    /**
+     * 기존에 발행된 정보성 가이드(-guide-) 파일명들을 뒤져서
+     * 해당 키워드로 이미 작성된 글이 있는지 검사
+     */
+    private static boolean isKeywordAlreadyPublished(String keyword) {
+        String safeName = keyword.toLowerCase().replaceAll("[^a-z0-9가-힣]", "");
+        if (safeName.length() < 3) return false;
+
+        String[] checkDirs = {
+                "content/posts/korea", "content/posts/global",
+                "posts/korea", "posts/global"
+        };
+
+        for (String dirPath : checkDirs) {
+            File dir = new File(dirPath);
+            if (!dir.exists() || !dir.isDirectory()) {
+                dir = new File(System.getProperty("user.dir"), dirPath);
+            }
+            if (dir.exists() && dir.isDirectory()) {
+                File[] files = dir.listFiles((d, name) -> name.endsWith(".md") && name.contains("-guide-"));
+                if (files != null) {
+                    for (File f : files) {
+                        String cleanFileName = f.getName().toLowerCase().replaceAll("[^a-z0-9가-힣]", "");
+                        if (cleanFileName.contains(safeName)) {
+                            return true; // 이미 발행된 키워드
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     // --- [5] 메인 루프 (홀수일: 상품 큐레이션 / 짝수일: 정보성 가이드) ---
     public static void main(String[] args) {
         CategoryRule[] rules = {
@@ -498,21 +532,42 @@ public class UniversalCurationPublisher {
                 // ==========================================
                 // [화/목/토/짝수일] 정보성 문제 해결 가이드 발행
                 // ==========================================
-                System.out.println("📘 [오늘은 정보성 가이드 발행일]");
-                List<String> oppKeywords = SearchConsoleKeywordTracker.fetchOpportunityKeywords();
+                DayOfWeek dayOfWeek = LocalDate.now().getDayOfWeek();
 
-                String targetKeyword;
-                if (!oppKeywords.isEmpty()) {
-                    targetKeyword = oppKeywords.get(0);
-                    System.out.println("🎯 서치콘솔 기회 키워드 포착: " + targetKeyword);
-                } else {
-                    targetKeyword = todayRule.keywordKr + " 고장 증상 해결 및 관리 팁";
-                    System.out.println("ℹ️ 서치콘솔 키워드 없음 → 카테고리 기반 팁 작성: " + targetKeyword);
+                // [3번 방식] 화/토는 서치콘솔 기회 키워드, 목요일(또는 그 외 짝수일)은 카테고리 고장 팁
+                boolean isSearchConsoleDay = (dayOfWeek == DayOfWeek.TUESDAY || dayOfWeek == DayOfWeek.SATURDAY);
+
+                String targetKeyword = null;
+
+                if (isSearchConsoleDay) {
+                    System.out.println("🎯 [오늘은 서치콘솔 기회 키워드 공략일]");
+                    List<String> oppKeywords = SearchConsoleKeywordTracker.fetchOpportunityKeywords();
+
+                    // [1번 방식] 이미 작성된 키워드는 패스하고 새 키워드 탐색
+                    for (String kw : oppKeywords) {
+                        if (!isKeywordAlreadyPublished(kw)) {
+                            targetKeyword = kw;
+                            System.out.println("✅ 미발행 서치콘솔 기회 키워드 채택: " + targetKeyword);
+                            break;
+                        } else {
+                            System.out.println("⏩ 이미 발행된 키워드 스킵: " + kw);
+                        }
+                    }
+
+                    if (targetKeyword == null) {
+                        System.out.println("ℹ️ 서치콘솔 기회 키워드가 모두 소진되었거나 없습니다 → 카테고리 팁으로 전환");
+                    }
                 }
 
-                // 서치콘솔 키워드면 targetKeyword 자체를, 기본 팁이면 todayRule을 테마로 지정
-                String activeTheme = (!oppKeywords.isEmpty()) ? targetKeyword : todayRule.keywordKr;
-                String activeThemeEng = (!oppKeywords.isEmpty()) ? targetKeyword : todayRule.keyword;
+                // 카테고리 팁 발행일이거나, 서치콘솔 키워드가 없는 경우 기본 카테고리 팁 작성
+                if (targetKeyword == null) {
+                    System.out.println("🛠️ [오늘은 정규 카테고리 유지보수/해결 팁 발행일]");
+                    targetKeyword = todayRule.keywordKr + " 고장 증상 해결 및 관리 팁";
+                }
+
+                // 타깃 키워드에 따른 동적 테마 설정
+                String activeTheme = targetKeyword.contains(todayRule.keywordKr) ? todayRule.keywordKr : targetKeyword;
+                String activeThemeEng = targetKeyword.contains(todayRule.keyword) ? todayRule.keyword : targetKeyword;
 
                 boolean isKoreanKeyword = targetKeyword.matches(".*[가-힣].*");
                 if (isKoreanKeyword) {
