@@ -370,48 +370,51 @@ public class UniversalCurationPublisher {
         System.out.println("✅ [정보성 가이드 저장 완료] (" + folderName + "): " + filePath.toAbsolutePath());
     }
 
+    /**
+     * posts 또는 content/posts 디렉터리를 스캔하여
+     * 오늘 테마(theme) 단어가 포함된 실존 큐레이션 글(.md)을 찾고 정확한 URL을 반환.
+     */
     private static String findExactCurationPostUrl(String folderName, String theme) {
         try {
-            // 1. 작업 디렉터리 다각도 체크 (로컬 및 GitHub Actions 호환)
-            File dir = new File("posts/" + folderName);
+            // [핵심 수정] Hugo 구조(content/posts)와 일반 구조(posts) 모두 탐색
+            File dir = new File("content/posts/" + folderName);
+            if (!dir.exists() || !dir.isDirectory()) {
+                dir = new File("posts/" + folderName);
+            }
+            if (!dir.exists() || !dir.isDirectory()) {
+                dir = new File(System.getProperty("user.dir"), "content/posts/" + folderName);
+            }
             if (!dir.exists() || !dir.isDirectory()) {
                 dir = new File(System.getProperty("user.dir"), "posts/" + folderName);
             }
-            if (!dir.exists() || !dir.isDirectory()) {
-                dir = new File("../posts/" + folderName);
-            }
 
             if (!dir.exists() || !dir.isDirectory()) {
-                System.out.println("⚠️ posts/" + folderName + " 디렉터리를 찾을 수 없습니다.");
+                System.out.println("⚠️ " + folderName + " 포스트 디렉터리를 찾을 수 없습니다.");
                 return null;
             }
 
-            // 2. 가이드 글(-guide-)이 아닌 순수 큐레이션 마크다운 파일만 추출
+            // 가이드 글(-guide-)이 아닌 순수 큐레이션 마크다운 파일만 추출
             File[] files = dir.listFiles((d, name) ->
                     name.endsWith(".md") && !name.contains("-guide-")
             );
 
             if (files == null || files.length == 0) {
-                System.out.println("ℹ️ posts/" + folderName + " 내에 큐레이션 글이 아직 없습니다.");
+                System.out.println("ℹ️ " + dir.getPath() + " 내에 큐레이션 글이 아직 없습니다.");
                 return null;
             }
 
-            // 3. 최신 날짜 순(내림차순) 정렬
+            // 최신 날짜 순(내림차순) 정렬
             Arrays.sort(files, (f1, f2) -> f2.getName().compareTo(f1.getName()));
 
-            // 4. 오늘 테마 단어가 파일명에 포함되어 있는지 검사 (특수문자/공백 제거 후 비교)
+            // 오늘 테마 단어 매칭 검사
             String targetTheme = theme.toLowerCase().replaceAll("[^a-z0-9가-힣]", "");
 
             for (File file : files) {
                 String cleanName = file.getName().toLowerCase().replaceAll("[^a-z0-9가-힣]", "");
                 if (cleanName.contains(targetTheme)) {
-                    // .md 확장자 제거하여 실제 슬러그 생성
                     String slug = file.getName().substring(0, file.getName().lastIndexOf(".md"));
-
-                    // 사이트 공식 퍼머링크 규격: /posts/{folderName}/{slug}/
                     String matchedUrl = "/posts/" + folderName + "/" + slug + "/";
-                    System.out.println("🎯 오늘 테마와 일치하는 큐레이션 포스트 매칭 성공: " + file.getName());
-                    System.out.println("🔗 연결할 내부 링크 URL: " + matchedUrl);
+                    System.out.println("🎯 기존 큐레이션 포스트 매칭 성공: " + file.getName());
                     return matchedUrl;
                 }
             }
