@@ -180,13 +180,14 @@ public class UniversalCurationPublisher {
         return list;
     }
 
-    // --- [3] AI 리뷰 작성 (언어 분리) ---
+    // --- [3] AI 리뷰 작성 (언어 분리 및 매력적인 제목 생성) ---
     public static String generateAiReview(String keyword, List<Product> products, boolean isKorean) throws Exception {
         StringBuilder prompt = new StringBuilder();
         if (isKorean) {
             prompt.append("당신은 IT/가전 전문 테크 리뷰어입니다. 아래 5개 제품 데이터를 바탕으로 구매 전환율이 높은 실사용 중심 큐레이션 글을 마크다운으로 작성하세요.\n\n");
             for (int i = 0; i < products.size(); i++) prompt.append(i + 1).append(". ").append(products.get(i).name).append("\n");
             prompt.append("\n[작성 지침]\n")
+                    .append("- 맨 첫 줄(# 제목)은 'Top 5', '완벽 가이드' 같은 뻔한 문구를 쓰지 말고, 소비자의 고민을 짚어주는 실사용형 제목으로 작성할 것. (예: 2026 원룸 공기청정기 필터 교체 쉬운 가성비 모델 비교)\n")
                     .append("- 기준 연도: 반드시 2026년 기준 최신 정보로 서술할 것.\n")
                     .append("- 서론: 해당 기기 구매 시 가장 많이 겪는 선택 고민 해결 팁 (2~3문장)\n")
                     .append("- 본문: 각 제품의 하드웨어 스펙(소재, 연결성, 내구성, 가성비) 위주 장단점 분석\n")
@@ -196,13 +197,11 @@ public class UniversalCurationPublisher {
             prompt.append("You are a professional IT hardware and tech gadget reviewer. Write a high-converting buying guide in Markdown based on these 5 products.\n\n");
             for (int i = 0; i < products.size(); i++) prompt.append(i + 1).append(". ").append(products.get(i).name).append("\n");
             prompt.append("\n[STRICT CONSTRAINTS & SEO GUIDELINES]\n")
-                    .append("1. HARDWARE SPECS ONLY: Focus strictly on build quality, connection (BT/2.4G/Type-C), battery life, switches/sensors, and desk ergonomics.\n")
-                    .append("2. NO UNRELATED WORDS: Do NOT use lifestyle/wellness buzzwords like 'yoga', 'organic', 'healthy', 'diet', or sleeping positions (e.g., 'side sleepers'). Strip them out if they appear in product titles.\n")
-                    .append("3. INTRO: 2-3 sentences addressing buyers' real concerns.\n")
-                    .append("4. BODY: Detailed breakdown of each product's core specs and pros/cons.\n")
-                    .append("5. CONCLUSION: Quick summary of which product fits which user type.\n")
-                    .append("6. Current year is strictly 2026. Do NOT use 2024 or 2025.\n")
-                    .append("7. Language: Entirely in clear, technical English.");
+                    .append("1. FIRST LINE (# Title): Catchy, practical buyer's headline without clickbait.\n")
+                    .append("2. HARDWARE SPECS ONLY: Focus strictly on build quality, connection (BT/2.4G/Type-C), battery life, switches/sensors, and desk ergonomics.\n")
+                    .append("3. NO UNRELATED WORDS: Do NOT use lifestyle/wellness buzzwords like 'yoga', 'organic', 'healthy', 'diet'.\n")
+                    .append("4. Current year is strictly 2026.\n")
+                    .append("5. Language: Entirely in clear, technical English.");
         }
 
         JsonObject message = new JsonObject(); message.addProperty("role", "user"); message.addProperty("content", prompt.toString());
@@ -318,7 +317,6 @@ public class UniversalCurationPublisher {
     }
 
     // --- [4-B 신규] 마크다운 파일 저장: 정보성 가이드 (내부 링크 포함) ---
-    // --- [4-B] 마크다운 파일 저장: 정보성 가이드 (실존하는 최신 큐레이션 글 정확 매핑) ---
     public static void saveInfoGuideMarkdown(String targetKeyword, String content, String folderName, boolean isKorean, String baseTheme) throws Exception {
         Date now = new Date();
         String dateFormatted = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").format(now);
@@ -327,7 +325,11 @@ public class UniversalCurationPublisher {
         StringBuilder md = new StringBuilder();
         md.append("---\n");
 
-        String title = isKorean ? "2026년 " + targetKeyword + " 완벽 해결 가이드 & 꿀팁" : "How to Solve " + targetKeyword + " (2026 Complete Guide)";
+        // 네이버 검색 결과 노출 시 클릭률(CTR)을 높이는 실용형 제목
+        String title = isKorean
+                ? targetKeyword + " 자가 해결 및 관리 가이드 (2026)"
+                : "How to Fix & Optimize " + targetKeyword + " (2026 Practical Guide)";
+
         md.append("title: \"").append(title).append("\"\n");
         md.append("date: ").append(dateFormatted).append("\n");
         md.append("categories: [\"").append(isKorean ? "테크 팁" : "Tech Tips").append("\"]\n");
@@ -337,17 +339,14 @@ public class UniversalCurationPublisher {
         md.append(content).append("\n\n---\n");
 
         // [내부 링크 생성]
-        // 오늘 테마와 일치하는 글이 있으면 해당 포스트 URL, 없으면 null
         String exactPostUrl = findExactCurationPostUrl(folderName, baseTheme);
 
         if (isKorean) {
             md.append("### 📌 함께 보면 좋은 추천 장비 가이드\n\n");
             if (exactPostUrl != null) {
-                // 테마가 정확히 일치하는 기존 추천글이 있을 때
-                md.append("> ").append(baseTheme).append(" 교체나 신규 구매를 고민 중이시라면 가성비와 성능이 검증된 인기 모델을 확인해 보세요.\n\n")
-                        .append("👉 **[2026 가성비 ").append(baseTheme).append(" 추천 Top 5 비교 및 실사용 가이드](").append(exactPostUrl).append(")**\n\n");
+                md.append("> ").append(baseTheme).append(" 교체나 신규 구매를 고민 중이시라면 실사용 성능이 검증된 인기 모델을 확인해 보세요.\n\n")
+                        .append("👉 **[2026 실사용 기준 ").append(baseTheme).append(" 추천 비교 가이드](").append(exactPostUrl).append(")**\n\n");
             } else {
-                // 아직 해당 테마 추천글이 없을 때는 카테고리 전체 모음으로 연결 (404 방지)
                 md.append("> 가성비와 실사용 평가를 종합한 최신 IT/가전 기기 비교 정보는 아래 카테고리에서 확인하실 수 있습니다.\n\n")
                         .append("👉 **[IT/가전 추천 가이드 전체 모음 보러가기](/categories/it-가전/)**\n\n");
             }
@@ -530,53 +529,41 @@ public class UniversalCurationPublisher {
             //isInfoDay = true;
             if (isInfoDay) {
                 // ==========================================
-                // [화/목/토/짝수일] 정보성 문제 해결 가이드 발행
+                // [정보성 문제 해결 가이드 발행]
                 // ==========================================
                 DayOfWeek dayOfWeek = LocalDate.now().getDayOfWeek();
-
-                // [3번 방식] 화/토는 서치콘솔 기회 키워드, 목요일(또는 그 외 짝수일)은 카테고리 고장 팁
                 boolean isSearchConsoleDay = (dayOfWeek == DayOfWeek.TUESDAY || dayOfWeek == DayOfWeek.SATURDAY);
 
-                String targetKeyword = null;
+                String globalKeyword = null;
 
                 if (isSearchConsoleDay) {
                     System.out.println("🎯 [오늘은 서치콘솔 기회 키워드 공략일]");
                     List<String> oppKeywords = SearchConsoleKeywordTracker.fetchOpportunityKeywords();
 
-                    // [1번 방식] 이미 작성된 키워드는 패스하고 새 키워드 탐색
                     for (String kw : oppKeywords) {
                         if (!isKeywordAlreadyPublished(kw)) {
-                            targetKeyword = kw;
-                            System.out.println("✅ 미발행 서치콘솔 기회 키워드 채택: " + targetKeyword);
+                            globalKeyword = kw;
+                            System.out.println("✅ 미발행 서치콘솔 기회 키워드 채택: " + globalKeyword);
                             break;
                         } else {
                             System.out.println("⏩ 이미 발행된 키워드 스킵: " + kw);
                         }
                     }
-
-                    if (targetKeyword == null) {
-                        System.out.println("ℹ️ 서치콘솔 기회 키워드가 모두 소진되었거나 없습니다 → 카테고리 팁으로 전환");
-                    }
                 }
 
-                // 카테고리 팁 발행일이거나, 서치콘솔 키워드가 없는 경우 기본 카테고리 팁 작성
-                if (targetKeyword == null) {
-                    System.out.println("🛠️ [오늘은 정규 카테고리 유지보수/해결 팁 발행일]");
-                    targetKeyword = todayRule.keywordKr + " 고장 증상 해결 및 관리 팁";
+                // 글로벌 키워드가 없으면 오늘의 영문 룰로 대체
+                if (globalKeyword == null) {
+                    globalKeyword = todayRule.keyword;
                 }
 
-                // 타깃 키워드에 따른 동적 테마 설정
-                String activeTheme = targetKeyword.contains(todayRule.keywordKr) ? todayRule.keywordKr : targetKeyword;
-                String activeThemeEng = targetKeyword.contains(todayRule.keyword) ? todayRule.keyword : targetKeyword;
+                // 1. 글로벌 정보성 가이드 발행
+                String globalReview = generateAiInfoGuide(globalKeyword, false);
+                saveInfoGuideMarkdown(globalKeyword, globalReview, "global", false, globalKeyword);
 
-                boolean isKoreanKeyword = targetKeyword.matches(".*[가-힣].*");
-                if (isKoreanKeyword) {
-                    String review = generateAiInfoGuide(targetKeyword, true);
-                    saveInfoGuideMarkdown(targetKeyword, review, "korea", true, activeTheme);
-                } else {
-                    String review = generateAiInfoGuide(targetKeyword, false);
-                    saveInfoGuideMarkdown(targetKeyword, review, "global", false, activeThemeEng);
-                }
+                // 2. 국내(Korea) 정보성 가이드 발행 (네이버 고노출 트래픽 흡수)
+                String koreaKeyword = todayRule.keywordKr + " 고장 증상 해결 및 관리 팁";
+                String koreaReview = generateAiInfoGuide(koreaKeyword, true);
+                saveInfoGuideMarkdown(koreaKeyword, koreaReview, "korea", true, todayRule.keywordKr);
 
             } else {
                 // ==========================================
